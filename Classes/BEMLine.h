@@ -7,12 +7,17 @@
 //  Copyright (c) 2014 Sam Spencer.
 //
 
-@import Foundation;
-@import UIKit;
-@import CoreGraphics;
 
-#import "BEMAverageLine.h"
-
+#if __has_feature(objc_modules)
+    // We recommend enabling Objective-C Modules in your project Build Settings for numerous benefits over regular #imports
+    @import Foundation;
+    @import UIKit;
+    @import CoreGraphics;
+#else
+    #import <Foundation/Foundation.h>
+    #import <UIKit/UIKit.h>
+    #import <CoreGraphics/CoreGraphics.h>
+#endif
 
 /// The type of animation used to display the graph
 typedef NS_ENUM(NSInteger, BEMLineAnimation) {
@@ -20,8 +25,6 @@ typedef NS_ENUM(NSInteger, BEMLineAnimation) {
     BEMLineAnimationDraw,
     /// The fade animation fades in the lines from 0% opaque to 100% opaque (based on the \p lineAlpha property).
     BEMLineAnimationFade,
-    /// The expand animation expands the lines from a small point to their full width (based on the \p lineWidth property).
-    BEMLineAnimationExpand,
     /// No animation is used to display the graph
     BEMLineAnimationNone
 };
@@ -40,53 +43,49 @@ typedef NS_ENUM(NSUInteger, BEMLineGradientDirection) {
 
 
 
+//----- REFERENCE -----//
+
+/// An arbitrary line description. This can be used to identify the line or display a graph key
+// @property (strong, nonatomic) NSString *descriptor;
+
+
+/** An integer pointing to the line's index value.
+   @discussion An integer which represents the line's index value. This is a zero-indexed value (the first line will have an index of 0, the second an index of 1, etc.). The line at the zero index will determine the reference lines and the bottom / top sections. All subsequent lines are drawn according to the calculations made for the first line. */
+@property (assign, nonatomic) NSInteger index;
+
+
 //----- POINTS -----//
 
+/// The previous point. Necessary for Bezier curve
+@property (assign, nonatomic) CGPoint P0;
+
+/// The starting point of the line
+@property (assign, nonatomic) CGPoint P1;
+
+/// The ending point of the line
+@property (assign, nonatomic) CGPoint P2;
+
+/// The next point. Necessary for Bezier curve
+@property (assign, nonatomic) CGPoint P3;
+
 /// All of the Y-axis values for the points
-@property (strong, nonatomic) NSArray *arrayOfPoints;
+@property (nonatomic) NSArray *arrayOfPoints;
 
 /// All of the X-Axis coordinates used to draw vertical lines through
-@property (strong, nonatomic) NSArray *arrayOfVerticalRefrenceLinePoints;
-
-/// The value used to offset the fringe vertical reference lines when the x-axis labels are on the edge
-@property (assign, nonatomic) CGFloat verticalReferenceHorizontalFringeNegation;
+@property (nonatomic) NSArray *arrayOfVerticalRefrenceLinePoints;
 
 /// All of the Y-Axis coordinates used to draw horizontal lines through
-@property (strong, nonatomic) NSArray *arrayOfHorizontalRefrenceLinePoints;
+@property (nonatomic) NSArray *arrayOfHorizontalRefrenceLinePoints;
 
 /// All of the point values
-@property (strong, nonatomic) NSArray *arrayOfValues;
+@property (nonatomic) NSArray *arrayOfValues;
 
 /** Draw thin, translucent, reference lines using the provided X-Axis and Y-Axis coordinates.
  @see Use \p arrayOfVerticalRefrenceLinePoints to specify vertical reference lines' positions. Use \p arrayOfHorizontalRefrenceLinePoints to specify horizontal reference lines' positions. */
-@property (assign, nonatomic) BOOL enableRefrenceLines;
+@property (nonatomic) BOOL enableRefrenceLines;
 
 /** Draw a thin, translucent, frame on the edge of the graph to separate it from the labels on the X-Axis and the Y-Axis. */
-@property (assign, nonatomic) BOOL enableRefrenceFrame;
-
-/** If reference frames are enabled, this will enable/disable specific borders.  Default: YES */
-@property (assign, nonatomic) BOOL enableLeftReferenceFrameLine;
-
-/** If reference frames are enabled, this will enable/disable specific borders.  Default: YES */
-@property (assign, nonatomic) BOOL enableBottomReferenceFrameLine;
-
-/** If reference frames are enabled, this will enable/disable specific borders.  Default: NO */
-@property (assign, nonatomic) BOOL enableRightReferenceFrameLine;
-
-/** If reference frames are enabled, this will enable/disable specific borders.  Default: NO */
-@property (assign, nonatomic) BOOL enableTopReferenceFrameLine;
-
-/** Dash pattern for the references line on the X axis */
-@property (nonatomic, strong) NSArray *lineDashPatternForReferenceXAxisLines;
-
-/** Dash pattern for the references line on the Y axis */
-@property (nonatomic, strong) NSArray *lineDashPatternForReferenceYAxisLines;
-
-/** If a null value is present, interpolation would draw a best fit line through the null point bound by its surrounding points.  Default: YES */
-@property (assign, nonatomic) BOOL interpolateNullValues;
-
-/** Draws everything but the main line on the graph; correlates to the \p displayDotsOnly property.  Default: NO */
-@property (assign, nonatomic) BOOL disableMainLine;
+@property (nonatomic) BOOL enableRefrenceFrame;
 
 
 
@@ -107,6 +106,10 @@ typedef NS_ENUM(NSUInteger, BEMLineGradientDirection) {
 /// A color gradient applied to the area below the line, inside of its superview. If set, it will be drawn on top of the fill from the \p bottomColor property.
 @property (assign, nonatomic) CGGradientRef bottomGradient;
 
+@property (strong, nonatomic) UIColor *xAxisBackgroundColor;
+
+@property (nonatomic) CGFloat xAxisBackgroundAlpha;
+
 /// A color gradient to be applied to the line. If this property is set, it will mask (override) the \p color property.
 @property (assign, nonatomic) CGGradientRef lineGradient;
 
@@ -116,55 +119,47 @@ typedef NS_ENUM(NSUInteger, BEMLineGradientDirection) {
 /// The reference line color. Defaults to `color`.
 @property (strong, nonatomic) UIColor *refrenceLineColor;
 
-
-
 //----- ALPHA -----//
 
 /// The line alpha
-@property (assign, nonatomic) float lineAlpha;
+@property (nonatomic) float lineAlpha;
 
 /// The alpha value of the area above the line, inside of its superview
-@property (assign, nonatomic) float topAlpha;
+@property (nonatomic) float topAlpha;
 
 /// The alpha value of the area below the line, inside of its superview
-@property (assign, nonatomic) float bottomAlpha;
+@property (nonatomic) float bottomAlpha;
 
 
 
 //----- SIZE -----//
 
 /// The width of the line
-@property (assign, nonatomic) float lineWidth;
-
-/// The width of a reference line
-@property (nonatomic) float referenceLineWidth;
+@property (nonatomic) float lineWidth;
 
 
 
 //----- BEZIER CURVE -----//
 
 /// The line is drawn with smooth curves rather than straight lines when set to YES.
-@property (assign, nonatomic) BOOL bezierCurveIsEnabled;
+@property (nonatomic) BOOL bezierCurveIsEnabled;
 
 
 
 //----- ANIMATION -----//
 
 /// The entrance animation period in seconds.
-@property (assign, nonatomic) CGFloat animationTime;
+@property (nonatomic) CGFloat animationTime;
 
 /// The type of entrance animation.
-@property (assign, nonatomic) BEMLineAnimation animationType;
+@property (nonatomic) BEMLineAnimation animationType;
 
 
 
-//----- AVERAGE -----//
+//----- FRAME -----//
 
-/// The average line
-@property (strong, nonatomic) BEMAverageLine *averageLine;
-
-/// The average line's y-value translated into the coordinate system
-@property (assign, nonatomic) CGFloat averageLineYCoordinate;
+/// The offset dependant on the size of the labels to create the frame
+@property (nonatomic) CGFloat frameOffset;
 
 
 

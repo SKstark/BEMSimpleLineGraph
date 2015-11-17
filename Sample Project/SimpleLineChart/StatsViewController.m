@@ -73,7 +73,7 @@
         cell.detailTextLabel.text = @"Minimum Value";
         return cell;
     } else if (indexPath.row == 0  && indexPath.section == 1) {
-        cell.textLabel.text = @"Rendered Snapshot";
+        cell.textLabel.text = @"Graph Snapshot";
         cell.imageView.image = snapshotImage;
         return cell;
     } else {
